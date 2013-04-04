@@ -1,0 +1,121 @@
+# -*- coding: utf-8 -*-
+import os,sys
+
+from play.utils import ODict
+
+apps = ['main','person']
+
+#Site Configuration
+site = {
+    "cookie_secret": "61oETzKXQAGaYdkL5gEmGeJJFuYh7EQnp2XdTP1o/Vo=",
+    "login_url": "/account/index",
+    "gzip" : False,
+    'logging':'debug',
+    "title": u"_site_title",
+    "keywords": u"_site_keyworks_",
+    "description": u"_site_description_",
+    "domain": u"http://sample.dev.com",
+    "cdn": u"http://sample.dev.com",
+    "feedback": u"_site_feedback_mail",
+    "webmaster": u"_site_webmaster_mail",
+    "admin_mail": u"_site_admin_mail",
+    "runtime": u"development",
+    "open_signup":False,
+    "google_analytics":False,
+    "mail_apperror":False,
+    "optimize_static_content":False,
+    "debug":True,
+    "mail_error":True
+}
+site = ODict(site)
+
+#SMTP Configuration
+mail = {
+    "engine":"play.mail.backends.console", #console, locmem, smtp
+    "host": u"localhost",
+    "port": 25,
+    "user": u"",
+    "passwd": u"",
+    "use_tls": False,
+    "fail_silently": False
+}
+mail = ODict(mail)
+
+#Session Security
+session = {
+    "key": u"quora",
+    "secret": site.cookie_secret,
+    "cookie_expires": True,
+    "cookie_expires_days": 30,
+    "cookie_id":"_sess",
+    "auth_cookie":"_auth"
+}
+session = ODict(session)
+
+#cache
+cache = {
+    "engine": "play.cache.memcache",
+    "servers": ['127.0.0.1:11219'],
+    "pools": 5,
+    "namespace": "quora",
+}
+cache = ODict(cache)
+
+#Redis
+redis = {
+    'engine':'play.nosql.redis0', #'play.nosql.redis0'
+    'namespace': 'quora',
+}
+redis = ODict(redis)
+
+#DataEngine
+dbm = {
+    "engine": "play.db.shard_manager",
+    "host": u"127.0.0.1:3309",
+    "user": u"quora",
+    "passwd": u"quora-dev",
+    "dbname": u"quora_dev",
+    "pools": 5,
+    "debug": site.debug,
+    "shards" {
+        "shard01" : ("localhost:33690", 1, 512),
+        "shard02" : ("localhost:33691", 513, 1024),
+    }
+    "idm": "RedisIdm" # "ShardIdm"
+}
+dbm = ODict(dbm)
+
+#MQ
+mq = {
+    'engine': 'play.mq.backend.rabbitmq', #'play.mq.backend.rabbitmq/beanstalk'
+    "host": u"127.0.0.1",
+    "port": 5672,
+    "pools": 5,
+    "username": "rabbitmq",
+    "passwd": "gine.com",
+    "vhost": "/",
+    "exchange": "quora_exchange"
+}
+mq = ODict(mq)
+
+#Static - Images
+image = {
+    'engine':'play.image.localfs', #'localfs/mogilefs'
+    "root_folder":""
+}
+image = ODict(image)
+
+#Search Engine
+search = {
+    "engine":"play.search.solr",
+    "url": u"http://127.0.0.1:8393/solr",
+    "pools": 5,
+    "cores": []
+}
+search = ODict(search)
+
+#Customs Settings
+sina_consumer_key = "3814868643"
+sina_consumer_secret = "b1c114bf4142a6808216183b7861737a"
+qqweibo_key = "a4d51bbec90a46c8a291326431264680"
+qqweibo_secret = "9c045ac07e2e22e1fa74d1ca80ad66cb"

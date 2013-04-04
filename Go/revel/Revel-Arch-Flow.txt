@@ -1,0 +1,65 @@
+1. Go相关
+1.1 环境
+export GOPATH=$HOME
+bin/revel build $project_name /tmp/$project_name
+bin/revel run $prject_name
+1.2 .go代码如有init函数，则init函数最先执行
+
+2. 应用初始化过程
+2.1 revel.go/Init
+2.1.0 定位Project BasePath, AppPath, ViewsPath, ConfPaths, TemplatePaths
+2.1.1 加载配置LoadConfig("app.conf")
+2.1.2 设置全局变量的值，如CookiePrefix, AppName, HttpPort, HttpAddr
+2.1.3 配置日志Logger, (log.*)
+2.1.4 按照配置module.*加载模块LoadModules
+
+3 使用harness.Build()编译App, 并启动
+3.1 初始化App, AppCmd
+3.2 生成main.go, 存放在$project/app/tmp/main.go。(参考sample-main.go)
+3.2.1 注册Controllers(执行:revel.RegisterController, mvc.go/RegisterController), 动态生成注册代码，注册的参数包括Controller类型和其Action方法
+3.2.2 注册Validator(执行:revel.DefaultValidationKeys)
+3.2.3 调用revel.Run启动应用, 代码入口为server.go/Run
+
+4. App启动过程
+4.1 初始化Router(MainRouter): 执行router.go/NewRouter, 并读取conf/routes配置文件
+4.2 初始化TemplateLoader(MainTemplateLoader): 执行template.go/NewTemplateLoader
+4.3 根据配置初始化Watcher(MainWatcher)，并监听Routes配置文件和Template文件夹
+4.4 初始化http.Server, 绑定处理函数server.go/handle
+4.5 调用已注册的各个Plugin的OnAppStart函数
+4.6 启动Server并监听：Server.ListenAndServe()
+
+5. 请求处理过程
+5.1 初始化Request, Response。初始化Request时，解析ContentType、Fomrat(html/xml/json)、AcceptLanguage(Locale)
+     http.go/NewRequest, http.go/NewResponse
+5.2 使用MainRouter匹配Route。若404则返回NotFound
+5.3 使用Route.ControllerName, 定位并初始化Controller。执行mvc.go/NewAppController
+5.4 使用Route.MethodName，定位并初始化Action。(appControllerPtr.MethodByName)
+5.5 将Route配置的参数合并进Request的参数集合，可以从Controller.Params获取
+5.6 反射(reflect)Action函数的参数，并绑定参数值
+5.7 执行Action。controller.Invoke(appControllerPtr, method, actualArgs)
+
+6. Action执行过程
+6.1 执行已注册的各个Plugin的BeforeRequest函数
+     当前Controller作为参数
+     若该函数有返回(c.Result不为空), 执行6.5
+6.2 执行Action主体代码(method.Call*), 并获取返回值，设置为c.Result
+6.3 执行已注册的各个Plugin的AfterRequest函数
+6.4 若c.Result为空, 则直接返回而不加载Template
+6.5 若c.Result不为空，则加载Template并输出给客户端
+6.6 若程序panic了，则处理这些panics
+6.6.1 执行已注册的各个Plugin的OnException函数
+6.6.2 向客户端输出500/Error
+6.7 执行已注册的各个Plugin的Finally函数
+
+7. Plugin相关
+7.1 系统内置如下Plugin: StartupPlugin, SessionPlugin, FlashPlugin, ValidationPlugin, InterceptorPlugin, I18nPlugin
+7.2 InterceptorPlugin会执行通过revel.InterceptMethod注册的方法
+7.2 Plugin会在如下事件产生时执行：OnAppStart，OnRoutesLoaded，BeforeRequest，AfterRequest，OnException，Finally
+
+8. Route相关
+
+9. 扩展
+9.1 编写Plugin，如ETag，Swf，CSRF，Authenticate
+9.2 注册TemplateFunc
+9.3 数据库连接池
+9.4 Template缓存
